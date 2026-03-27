@@ -7,7 +7,7 @@
     "serve": "nodemon ./app.js"
   },
   "keywords": [],
-  "author": "灯火不休时",
+  "author": "kangtongshun",
   "license": "ISC",
   "dependencies": {
     "@wecom/crypto": "^1.0.1",
