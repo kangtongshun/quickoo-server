@@ -1,54 +1,47 @@
-name: Deploy with PM2
+name: Quick Deploy
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:  # 允许手动触发
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: self-hosted
-    environment: production  # 可选：使用环境保护
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20.x'
-        
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-          
-    - name: Install dependencies
-      run: npm ci --production
-      # 生产环境只安装生产依赖
-      
-    - name: Run build if needed
+    - name: Deploy
       run: |
-        if [ -f "package.json" ] && grep -q "build" package.json; then
-          npm run build
+        # 进入应用目录
+        cd /opt/wecom-app
+        
+        # 拉取最新代码
+        git pull origin main
+        
+        # 安装生产依赖（不安装 nodemon）
+        npm ci --production
+        
+        # 创建 .env 文件
+        cat > .env << EOF
+        PORT=${{ secrets.PORT }}
+        TOKEN=${{ secrets.TOKEN }}
+        ENCODING_AES_KEY=${{ secrets.ENCODING_AES_KEY }}
+        EOF
+        
+        # 停止旧进程
+        pkill -f "node app.js" || true
+        
+        # 启动新进程（后台运行）
+        nohup node app.js > app.log 2>&1 &
+        
+        # 等待服务启动
+        sleep 3
+        
+        # 健康检查
+        if curl -f http://localhost:${{ secrets.PORT || 3000 }}/; then
+          echo "✅ Deployment successful!"
+        else
+          echo "❌ Health check failed"
+          cat app.log
+          exit 1
         fi
-        
-    - name: Deploy with PM2
-      run: |
-        # 使用 ecosystem.config.js 配置文件
-        pm2 deploy ecosystem.config.js production
-        
-        # 或者手动重启
-        # pm2 reload ecosystem.config.js --env production
-        
-        # 查看状态
-        pm2 status
-        
-    - name: Health check
-      run: |
-        sleep 10
-        curl -f http://localhost:8083/api/health
