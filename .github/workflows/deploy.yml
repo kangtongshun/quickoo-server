@@ -13,8 +13,7 @@ jobs:
     - name: Deploy
       run: |
         # 进入应用目录
-        cd /opt/wecom-app
-        
+        cd /var/www/quickoo-server        
         # 拉取最新代码
         git pull origin main
         
