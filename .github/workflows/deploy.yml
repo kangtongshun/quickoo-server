@@ -12,8 +12,6 @@ jobs:
     steps:
     # 使用 actions/checkout 自动处理所有 Git 操作
     - uses: actions/checkout@v5
-     with:    
-     repository: "https://github.com/kangtongshun/quickoo-server.git"
 
     # 直接使用当前目录（Runner 已经帮你拉好代码了）
     - run: npm ci --production
