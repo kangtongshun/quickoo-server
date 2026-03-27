@@ -10,37 +10,22 @@ jobs:
     runs-on: self-hosted
     
     steps:
-    - name: Deploy
+    # 使用 actions/checkout 自动处理所有 Git 操作
+    - uses: actions/checkout@v3
+    
+    # 直接使用当前目录（Runner 已经帮你拉好代码了）
+    - run: npm ci --production
+    
+    - name: Create .env
       run: |
-        # 进入应用目录
-        cd /var/www/quickoo-server        
-        # 拉取最新代码
-        git pull origin main
-        
-        # 安装生产依赖（不安装 nodemon）
-        npm ci --production
-        
-        # 创建 .env 文件
         cat > .env << EOF
         PORT=${{ secrets.PORT }}
         TOKEN=${{ secrets.TOKEN }}
         ENCODING_AES_KEY=${{ secrets.ENCODING_AES_KEY }}
         EOF
-        
-        # 停止旧进程
+    
+    - run: |
         pkill -f "node app.js" || true
-        
-        # 启动新进程（后台运行）
         nohup node app.js > app.log 2>&1 &
-        
-        # 等待服务启动
         sleep 3
-        
-        # 健康检查
-        if curl -f http://localhost:${{ secrets.PORT || 3000 }}/; then
-          echo "✅ Deployment successful!"
-        else
-          echo "❌ Health check failed"
-          cat app.log
-          exit 1
-        fi
+        curl -f http://localhost:${{ secrets.PORT || 3000 }}/ || (cat app.log && exit 1)
