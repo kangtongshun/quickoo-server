@@ -8,7 +8,10 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    
+    env:
+      PORT: ${{ secrets.PORT }}
+      TOKEN: ${{ secrets.TOKEN }}
+      ENCODING_AES_KEY: ${{ secrets.ENCODING_AES_KEY }}
     steps:
     # 使用 actions/checkout 自动处理所有 Git 操作
     - uses: actions/checkout@v5
