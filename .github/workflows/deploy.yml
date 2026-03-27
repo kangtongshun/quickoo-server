@@ -27,8 +27,29 @@ jobs:
         ENCODING_AES_KEY=${{ secrets.ENCODING_AES_KEY }}
         EOF
     
-    - run: |
-        pkill -f "node app.js" || true
-        nohup node app.js > app.log 2>&1 &
+    - name: Install PM2 globally
+      run: |
+        npm install -g pm2
+        # 确保 pm2 在 PATH 中
+        echo "$(npm prefix -g)/bin" >> $GITHUB_PATH
+
+    - name: Start with PM2
+      run: |
+        # 停止并删除旧应用
+        pm2 delete my-app || true
+        
+        # 启动新应用
+        pm2 start app.js --name my-app
+        
+        # 保存进程列表
+        pm2 save
+        
+        # 设置开机自启（可选）
+        pm2 startup
+        
         sleep 3
-        curl -f http://localhost:${{ secrets.PORT || 3000 }}/ || (cat app.log && exit 1)
+        pm2 status
+    
+    - name: Test
+      run: |
+        curl -f http://localhost:${{ secrets.PORT || 3000 }}/
