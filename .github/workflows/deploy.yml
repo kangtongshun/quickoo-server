@@ -29,17 +29,17 @@ jobs:
 
     - name: Start with PM2
       run: |
-        # 停止并删除旧应用
-        pm2 delete my-app || true
+        # 创建日志目录
+        mkdir -p logs
         
-        # 启动新应用
-        pm2 start app.js --name my-app
+        # 停止旧应用（如果存在）
+        pm2 delete my-app 2>/dev/null || echo "No existing app"
         
-        # 保存进程列表
+        # 启动新应用 - 使用 ecosystem.config.js
+        pm2 start ecosystem.config.js --env production
+        
+        # 保存 PM2 配置
         pm2 save
-        
-        # 设置开机自启（可选）
-        pm2 startup
         
         sleep 3
         pm2 status
