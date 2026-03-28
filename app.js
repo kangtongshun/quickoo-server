@@ -8,8 +8,6 @@ const { promisify } = require('util');
 // 1. 调用 express() 得到一个 app
 //    类似于 http.createServer()
 const app = express();
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 创建XML解析器
 const parseXml = promisify(xml2js.parseString);
@@ -75,7 +73,7 @@ app.post('/api', async (req, res) => {
     console.log("=".repeat(50));
     console.log("收到POST消息推送");
     console.log("请求时间:", new Date().toISOString());
-    console.log(req.body)
+    console.log(req.body, Object.keys(req.body))
     // 获取URL参数并进行Urldecode处理
     let timestamp = req.query.timestamp;
     let nonce = req.query.nonce;
