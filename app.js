@@ -2,11 +2,25 @@
 const express = require('express');
 
 const crypto = require('@wecom/crypto');
-
+const xml2js = require('xml2js');
+const { promisify } = require('util');
 
 // 1. 调用 express() 得到一个 app
 //    类似于 http.createServer()
 const app = express();
+// 添加中间件，用于解析请求体
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+// 解析XML格式的请求体
+app.use(express.text({ type: 'application/xml' }));
+
+// 创建XML解析器
+const parseXml = promisify(xml2js.parseString);
+const buildXml = new xml2js.Builder({
+    cdata: true,
+    headless: false,
+    renderOpts: { pretty: false }
+});
 
 // 2. 设置请求对应的处理函数
 //    当客户端以 GET 方法请求 /api 的时候就会调用第二个参数：请求处理函数
