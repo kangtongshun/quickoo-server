@@ -26,12 +26,6 @@ jobs:
         TOKEN=${{ secrets.TOKEN }}
         ENCODING_AES_KEY=${{ secrets.ENCODING_AES_KEY }}
         EOF
-    
-    - name: Install PM2 globally
-      run: |
-        npm install -g pm2
-        # 确保 pm2 在 PATH 中
-        echo "$(npm prefix -g)/bin" >> $GITHUB_PATH
 
     - name: Start with PM2
       run: |
