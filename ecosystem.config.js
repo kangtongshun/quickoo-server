@@ -12,10 +12,12 @@ module.exports = {
     autorestart: true,        // 自动重启
     watch: false,             // 文件变化自动重启（生产环境建议false）
     
-    // 环境变量
+    // 环境变量 - 优先级：环境变量 > .env文件 > 默认值
     env: {
-      NODE_ENV: 'production',
-      PORT: 3000,             // 默认端口，会被 .env 或系统环境变量覆盖
+      NODE_ENV: process.env.NODE_ENV || 'production',
+      PORT: process.env.PORT || 3000,
+      TOKEN: process.env.TOKEN || '',
+      ENCODING_AES_KEY: process.env.ENCODING_AES_KEY || '',
     },
     
     // 日志配置
