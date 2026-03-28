@@ -242,7 +242,6 @@ app.post('/api', async (req, res) => {
         return;
       }
     })
-  }
 });
 app.get('/', (req, res) => {
     res.json({
