@@ -8,11 +8,8 @@ const { promisify } = require('util');
 // 1. 调用 express() 得到一个 app
 //    类似于 http.createServer()
 const app = express();
-// 添加中间件，用于解析请求体
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-// 解析XML格式的请求体
-app.use(express.text({ type: 'application/xml' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // 创建XML解析器
 const parseXml = promisify(xml2js.parseString);
