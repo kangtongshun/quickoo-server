@@ -73,7 +73,7 @@ app.post('/api', async (req, res) => {
     console.log("=".repeat(50));
     console.log("收到POST消息推送");
     console.log("请求时间:", new Date().toISOString());
-    console.log(req.body, Object.keys(req.body))
+    console.log(req)
     // 获取URL参数并进行Urldecode处理
     let timestamp = req.query.timestamp;
     let nonce = req.query.nonce;
