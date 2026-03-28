@@ -1,3 +1,5 @@
+require('dotenv').config();  // 如果项目中有 dotenv
+
 // ecosystem.config.js
 module.exports = {
   apps: [{
