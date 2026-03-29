@@ -196,9 +196,11 @@ app.post('/api', async (req, res) => {
           var decrypted = cryptor.decrypt(encryptMessage);
           var messageWrapXml = decrypted.message;
           if (messageWrapXml === '') {
+            console.log("Invalid corpId");
             res.status(401).end('-40005_Invalid corpId');
             return;
           }
+          console.log("messageWrapXml: " + messageWrapXml);
           xml2js.parseString(messageWrapXml, {
             trim: true
           }, function (err, result) {
