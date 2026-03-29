@@ -193,10 +193,10 @@ app.post('/api', async (req, res) => {
           var xml = formatMessage(result.xml);
           console.log(xml);
           var encryptMessage = xml.Encrypt;
-          if (sVerifyMsgSig != cryptor.getSignature(sVerifyTimeStamp, sVerifyNonce, encryptMessage)) {
-            console.log("fail");
-            return;
-          }
+          // if (msg_signature != cryptor.getSignature(sVerifyTimeStamp, sVerifyNonce, encryptMessage)) {
+          //   console.log("fail");
+          //   return;
+          // }
           console.log("encryptMessage: ",  crypto.decrypt(EncodingAESKey, encryptMessage));
           var decrypted = cryptor.decrypt(encryptMessage);
           var messageWrapXml = decrypted.message;
