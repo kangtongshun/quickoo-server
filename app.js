@@ -206,16 +206,22 @@ app.post('/api', async (req, res) => {
           }, function (err, result) {
             if (err) {
               var parseErr = new Error('-40008_BadMessage:' + err.name);
+              console.log("parseErr: " + parseErr);
               parseErr.name = 'weChat';
             }
             var message = formatMessage(result.xml);
+            console.log("message: " + message);
             var msgType = message.MsgType;
+            console.log("msgType: " + msgType);
             var fromUsername = message.ToUserName;
+            console.log("fromUsername: " + fromUsername);
             var toUsername = message.FromUserName;
+            console.log("toUsername: " + toUsername);
             console.log(message);
             switch (msgType) {
               case 'text':
                 var sendContent = send(fromUsername, toUsername);
+                console.log("sendContent: " + sendContent);
                 res.status(200).end(sendContent);
                 break;
                 //其他逻辑根据业务需求进行处理
