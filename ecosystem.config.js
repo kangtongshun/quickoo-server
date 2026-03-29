@@ -18,6 +18,7 @@ module.exports = {
       PORT: process.env.PORT || 3000,
       TOKEN: process.env.TOKEN || '',
       ENCODING_AES_KEY: process.env.ENCODING_AES_KEY || '',
+      CORP_ID: process.env.CORP_ID || '',
     },
     
     // 日志配置
