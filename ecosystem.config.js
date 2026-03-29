@@ -19,6 +19,7 @@ module.exports = {
       TOKEN: process.env.TOKEN || '',
       ENCODING_AES_KEY: process.env.ENCODING_AES_KEY || '',
       CORP_ID: process.env.CORP_ID || '',
+      CORP_SECRET: process.env.CORP_SECRET || '',
     },
     
     // 日志配置

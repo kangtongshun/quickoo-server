@@ -13,6 +13,7 @@ jobs:
       TOKEN: ${{ secrets.TOKEN }}
       ENCODING_AES_KEY: ${{ secrets.ENCODING_AES_KEY }}
       CORP_ID: ${{ secrets.CORP_ID }}
+      CORP_SECRET: ${{ secrets.CORP_SECRET }}
     steps:
     # 使用 actions/checkout 自动处理所有 Git 操作
     - uses: actions/checkout@v5
@@ -27,6 +28,7 @@ jobs:
         TOKEN=${{ secrets.TOKEN }}
         ENCODING_AES_KEY=${{ secrets.ENCODING_AES_KEY }}
         CORP_ID=${{ secrets.CORP_ID }}
+        CORP_SECRET=${{ secrets.CORP_SECRET }}
         EOF
 
     - name: Start with PM2

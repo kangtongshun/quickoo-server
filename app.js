@@ -1,3 +1,4 @@
+require('dotenv').config();
 // 0. 导入 Express
 const express = require('express');
 var WXBizMsgCrypt = require('wechat-crypto');
@@ -9,6 +10,78 @@ const { promisify } = require('util');
 // 1. 调用 express() 得到一个 app
 //    类似于 http.createServer()
 const app = express();
+
+/** 各客服账号 sync_msg 的增量游标（生产环境建议入库） */
+const kfCursorByOpenKfid = new Map();
+let accessTokenCache = { token: null, expiresAt: 0 };
+
+async function getAccessToken() {
+  const now = Date.now();
+  if (accessTokenCache.token && now < accessTokenCache.expiresAt - 60_000) {
+    return accessTokenCache.token;
+  }
+  const corpId = process.env.CORP_ID;
+  const corpSecret = process.env.CORP_SECRET;
+  if (!corpId || !corpSecret) {
+    throw new Error('缺少环境变量 CORP_ID 或 CORP_SECRET（用于 gettoken）');
+  }
+  const url =
+    'https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=' +
+    encodeURIComponent(corpId) +
+    '&corpsecret=' +
+    encodeURIComponent(corpSecret);
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.errcode !== 0) {
+    throw new Error(`gettoken 失败: ${data.errcode} ${data.errmsg}`);
+  }
+  const expiresIn = data.expires_in || 7200;
+  accessTokenCache = {
+    token: data.access_token,
+    expiresAt: now + expiresIn * 1000
+  };
+  return accessTokenCache.token;
+}
+
+/**
+ * 收到 kf_msg_or_event 回调后，用回调里的 Token + OpenKfId 拉取具体消息（含 has_more 分页）。
+ * @see https://developer.work.weixin.qq.com/document/path/94670
+ */
+async function syncKfMessagesFromCallback({ token, openKfid }) {
+  const accessToken = await getAccessToken();
+  let cursor = kfCursorByOpenKfid.get(openKfid) || '';
+  const collected = [];
+  while (true) {
+    const res = await fetch(
+      'https://qyapi.weixin.qq.com/cgi-bin/kf/sync_msg?access_token=' +
+        encodeURIComponent(accessToken),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cursor,
+          token,
+          limit: 1000,
+          voice_format: 0,
+          open_kfid: openKfid
+        })
+      }
+    );
+    const data = await res.json();
+    if (data.errcode !== 0) {
+      throw new Error(`sync_msg 失败: ${data.errcode} ${data.errmsg}`);
+    }
+    if (data.msg_list && data.msg_list.length) {
+      collected.push(...data.msg_list);
+    }
+    if (data.next_cursor != null && data.next_cursor !== '') {
+      kfCursorByOpenKfid.set(openKfid, data.next_cursor);
+      cursor = data.next_cursor;
+    }
+    if (!data.has_more) break;
+  }
+  return collected;
+}
 
 // 创建XML解析器
 const parseXml = promisify(xml2js.parseString);
@@ -64,7 +137,7 @@ function formatMessage(result) {
  */
 function reply(fromUsername, toUsername) {
   var info = {};
-  info.msgType = type;
+  info.msgType = 'text';
   info.createTime = new Date().getTime();
   info.toUsername = toUsername;
   info.fromUsername = fromUsername;
@@ -208,7 +281,7 @@ app.post('/api', async (req, res) => {
           console.log("messageWrapXml: " + messageWrapXml);
           xml2js.parseString(messageWrapXml, {
             trim: true
-          }, function (err, result) {
+          }, async function (err, result) {
             if (err) {
               var parseErr = new Error('-40008_BadMessage:' + err.name);
               console.log("parseErr: " + parseErr);
@@ -223,27 +296,53 @@ app.post('/api', async (req, res) => {
             var toUsername = message.FromUserName;
             console.log("toUsername: " + toUsername);
             console.log(message);
-            switch (msgType) {
-              case 'text':
-                var sendContent = send(fromUsername, toUsername);
-                console.log("sendContent: " + sendContent);
-                res.status(200).end(sendContent);
-                break;
-                //其他逻辑根据业务需求进行处理
-              case 'image':
-                break;
-              case 'video':
-                break;
-              case 'voice':
-                break;
-              case 'location':
-                break;
-              case 'link':
-                break;
-              case 'event':
-                var event = message.Event;
-                console.log(event);
-                break;
+            try {
+              switch (msgType) {
+                case 'text':
+                  var sendContent = send(fromUsername, toUsername);
+                  console.log("sendContent: " + sendContent);
+                  res.status(200).end(sendContent);
+                  break;
+                  //其他逻辑根据业务需求进行处理
+                case 'image':
+                case 'video':
+                case 'voice':
+                case 'location':
+                case 'link':
+                  res.status(200).send('success');
+                  break;
+                case 'event':
+                  if (message.Event === 'kf_msg_or_event') {
+                    const token = message.Token;
+                    const openKfid = message.OpenKfId;
+                    if (!token || !openKfid) {
+                      console.error('kf_msg_or_event 缺少 Token 或 OpenKfId', message);
+                    } else {
+                      const msgList = await syncKfMessagesFromCallback({
+                        token,
+                        openKfid
+                      });
+                      console.log(
+                        'sync_msg 拉取条数:',
+                        msgList.length,
+                        JSON.stringify(msgList, null, 2)
+                      );
+                      // 在此根据 msg_list 中每条 msgtype（text/image/...）做业务处理
+                    }
+                    res.status(200).send('success');
+                    break;
+                  }
+                  console.log(message.Event);
+                  res.status(200).send('success');
+                  break;
+                default:
+                  res.status(200).send('success');
+              }
+            } catch (e) {
+              console.error('处理消息时出错:', e);
+              if (!res.headersSent) {
+                res.status(200).send('success');
+              }
             }
 
           });
