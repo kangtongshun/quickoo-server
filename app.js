@@ -193,6 +193,7 @@ app.post('/api', async (req, res) => {
             console.log("fail");
             return;
           }
+          console.log("encryptMessage: ",  crypto.decrypt(EncodingAESKey, encryptMessage));
           var decrypted = cryptor.decrypt(encryptMessage);
           var messageWrapXml = decrypted.message;
           if (messageWrapXml === '') {
