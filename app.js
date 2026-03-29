@@ -173,12 +173,13 @@ app.post('/api', async (req, res) => {
         if (err) {
           var loadErr = new Error('weChat load message error');
           loadErr.name = 'weChat';
+          console.log("loadErr: " + loadErr);
         }
         var xml = buff.toString('utf-8');
         if (!xml) {
           var emptyErr = new Error('-40002_body is empty');
           emptyErr.name = 'weChat';
-
+          console.log("emptyErr: " + emptyErr);
         }
         xml2js.parseString(xml, {
           trim: true
@@ -186,7 +187,9 @@ app.post('/api', async (req, res) => {
           if (err) {
             var parseErr = new Error('-40008_parse xml error');
             parseErr.name = 'weChat';
+            console.log("parseErr: " + parseErr);
           }
+          console.log("result: " + result);
           var xml = formatMessage(result.xml);
           console.log(xml);
           var encryptMessage = xml.Encrypt;
@@ -248,6 +251,7 @@ app.post('/api', async (req, res) => {
 
 
       } catch (err) {
+        console.log("err: " + err);
         res.status(401).end('System Busy');
         return;
       }
