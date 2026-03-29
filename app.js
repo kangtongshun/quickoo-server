@@ -26,6 +26,7 @@ function load(stream, callback) {
     buffers.push(trunk)
   });
   stream.on('end', function () {
+    console.log('结束')
     callback(null, Buffer.concat(buffers));
   });
   stream.once('error', callback);
@@ -166,7 +167,7 @@ app.post('/api', async (req, res) => {
     console.log("请求参数:");
     console.log(`msg_signature: ${msg_signature}`);
     console.log(`timestamp: ${timestamp}`);
-    console.log(`nonce: ${nonce}`);
+    console.log(`nonce--: ${nonce}`);
     load(req, function (err, buff) {
       try {
         if (err) {
