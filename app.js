@@ -154,7 +154,6 @@ app.post('/api', async (req, res) => {
     console.log("=".repeat(50));
     console.log("收到POST消息推送");
     console.log("请求时间:", new Date().toISOString());
-    console.log(req)
     // 获取URL参数并进行Urldecode处理
     let timestamp = req.query.timestamp;
     let nonce = req.query.nonce;
@@ -188,9 +187,10 @@ app.post('/api', async (req, res) => {
             parseErr.name = 'weChat';
           }
           var xml = formatMessage(result.xml);
+          console.log(xml);
           var encryptMessage = xml.Encrypt;
           if (sVerifyMsgSig != cryptor.getSignature(sVerifyTimeStamp, sVerifyNonce, encryptMessage)) {
-            //console.log("fail");
+            console.log("fail");
             return;
           }
           var decrypted = cryptor.decrypt(encryptMessage);
@@ -210,7 +210,7 @@ app.post('/api', async (req, res) => {
             var msgType = message.MsgType;
             var fromUsername = message.ToUserName;
             var toUsername = message.FromUserName;
-
+            console.log(message);
             switch (msgType) {
               case 'text':
                 var sendContent = send(fromUsername, toUsername);
